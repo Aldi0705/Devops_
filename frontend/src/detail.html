@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+  <main class="container text-center pt-5">
+    <ul class="nav bg-success fixed-top p-2 justify-content-center">
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./product.html">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./cart.html">Cart</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./profile.html">Profile</a>
+      </li>
+    </ul>
+    <h1 class="text-center mt-3" id="product-name"></h1>
+    <p><small class="text-muted" id="product-date"></small></p>
+    <img class="w-50" alt="..." id="product-img">
+    <p class="fw-bold" id="product-price"></p>
+    <p id="product-desc"></p>
+    <hr>
+    <button class="btn btn-primary" id="addtocartbtn">Add to Cart</button>
+    <button class="btn btn-success" id="editbtn" onclick="location.assign('./editproduct.html')">Edit</button>
+    <button class="btn btn-danger" id="deletebtn">Delete</button>
+    <hr>
+    <h2 class="text-start">Comments</h2>
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="Type your comment here..." aria-label="Type keyword here"
+        aria-describedby="commentBtn" id="comment-input">
+      <span class="input-group-text bg-primary text-white" id="comment-btn">Send</span>
+    </div>
+    <div id="commentcontainer"></div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('TOKEN');
+    const id = localStorage.getItem('CURRENT_ID_PRODUCT');
+    const user = JSON.parse(localStorage.getItem('USER'));
+    const productUrl = `http://localhost:8000/product/${id}`;
+    const cartUrl = `http://localhost:8000/cart`;
+    const addCommentUrl = `http://localhost:8000/comment`;
+    const commentUrl = `http://localhost:8000/comment/${id}`;
+    const productName = document.querySelector('#product-name');
+    const productImg = document.querySelector('#product-img');
+    const productprice = document.querySelector('#product-price');
+    const productdesc = document.querySelector('#product-desc');
+    const productdate = document.querySelector('#product-date');
+    const addtocartbtn = document.querySelector('#addtocartbtn');
+    const editbtn = document.querySelector('#editbtn');
+    const deletebtn = document.querySelector('#deletebtn');
+    const commentcontainer = document.querySelector('#commentcontainer');
+    const commentbtn = document.querySelector('#comment-btn');
+    fetch(productUrl)
+      .then(response => response.json())
+      .then(value => {
+        if (value.error) alert(value.message)
+        else {
+          const { picture, name, description, datetime, price, id_user } = value.data;
+          const uint8Array = new Uint8Array(picture.data);
+          const base64Image = btoa(String.fromCharCode.apply(null, uint8Array));
+          const img = `data:image/png;base64,${base64Image}`;
+          if (id_user != user.id) {
+            editbtn.setAttribute('hidden', true);
+            deletebtn.setAttribute('hidden', true);
+          }
+          localStorage.setItem('CURRENT_PRODUCT', `${name}%%%${description}%%%${price}}`)
+          productName.innerHTML = name;
+          productImg.setAttribute('src', img);
+          productprice.innerHTML = `Rp. ${price}`;
+          productdesc.innerHTML = description;
+          productdate.innerHTML = `${datetime.slice(11, 16)} | ${datetime.slice(0, 10)}`;
+        };
+      });
+    addtocartbtn.addEventListener('click', () => {
+      const qty = parseInt(prompt('Masukkan jumlah barang', 1));
+      if (qty) {
+        fetch(cartUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ qty, id_product: id }),
+        })
+          .then(response => response.json())
+          .then(value => alert(value.message));
+      }
+    });
+    commentbtn.addEventListener('click', () => {
+      const comment_text = document.querySelector('#comment-input').value;
+      fetch(addCommentUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ comment_text, id_product: id }),
+      })
+        .then(response => response.json())
+        .then(value => {
+          alert(value.message);
+          location.reload();
+        });
+    });
+    fetch(commentUrl)
+      .then(response => response.json())
+      .then(value => {
+        if (value.error) alert(value.message)
+        else {
+          value.data.forEach(({ id, id_user, comment_text, datetime }) => {
+            localStorage.setItem('CURRENT_PRODUCT_COMMENT', `${id}%%%${comment_text}%%%${datetime}}`)
+            commentcontainer.innerHTML += `
+              <div class="text-start border-top m-3 p-2" idcomment="${id}">
+                <p class="m-0">${comment_text}</p>
+                <span><small class="text-muted">${datetime.slice(11, 16)} | ${datetime.slice(0, 10)}</small></span>
+                <button class="btn btn-sm btn-success" id="editcommentbtn" idcomment="${id}" iduser="${id_user}">Edit</button>
+                <button class="btn btn-sm btn-danger" id="deletecommentbtn" idcomment="${id}" iduser="${id_user}">Delete</button>
+              </div>
+            `;
+          });
+          const editcommentbtn = document.querySelectorAll('#editcommentbtn');
+          const deletecommentbtn = document.querySelectorAll('#deletecommentbtn');
+          editcommentbtn.forEach(btn => {
+            const idcomment = btn.getAttribute('idcomment');
+            const iduser = btn.getAttribute('iduser');
+            const currcomment = btn.previousElementSibling.previousElementSibling.textContent;
+            if (iduser != user.id) btn.setAttribute('hidden', true);
+            btn.addEventListener('click', () => {
+              const comment_text = prompt('Edit Comment', currcomment);
+              if (comment_text) {
+                fetch(addCommentUrl, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ id: idcomment, comment_text, id_product: id }),
+                })
+                  .then(response => response.json())
+                  .then(value => {
+                    alert(value.message);
+                    location.reload();
+                  });
+              }
+            });
+          });
+          deletecommentbtn.forEach(btn => {
+            const idcomment = btn.getAttribute('idcomment');
+            const iduser = btn.getAttribute('iduser');
+            if (iduser != user.id) btn.setAttribute('hidden', true);
+            btn.addEventListener('click', () => {
+              fetch(`${addCommentUrl}/${idcomment}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              })
+                .then(response => response.json())
+                .then(value => {
+                  alert(value.message);
+                  location.reload();
+                });
+            });
+          });
+        };
+      });
+    deletebtn.addEventListener('click', () => {
+      fetch(productUrl, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+        .then(response => response.json())
+        .then(value => {
+          if (value.error) alert(value.message)
+          else location.assign('./product.html');
+        });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <style>
+    @media screen and (max-width: 670px) {
+      #profile-container {
+        width: 100%;
+      }
+    }
+
+    @media screen and (min-width: 670px) {
+      #profile-container {
+        width: 50%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container pt-5">
+    <ul class="nav bg-success fixed-top p-2 justify-content-center">
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./product.html">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./cart.html">Cart</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./profile.html">Profile</a>
+      </li>
+    </ul>
+    <h1 class="text-center mt-3">Profile</h1>
+    <div class="p-4 my-3 m-auto border border-primary rounded-3" id="profile-container">
+      <img class="m-auto d-block" id="avatar" alt="profile" width="220px">
+      <hr>
+      <p id="name"></p>
+      <p id="username"></p>
+      <p id="email"></p>
+      <hr>
+      <button type="button" class="btn btn-danger" id="logoutbtn">Log Out</button>
+    </div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('TOKEN');
+    const { name, username, email, avatar } = JSON.parse(localStorage.getItem('USER'));
+    const changepasswordUrl = 'http://localhost:8000/auth/password/change';
+    const profileavatar = document.querySelector('#avatar');
+    const profilename = document.querySelector('#name');
+    const profileusername = document.querySelector('#username');
+    const profileemail = document.querySelector('#email');
+    if (avatar) {
+      const uint8Array = new Uint8Array(avatar.data);
+      const base64Image = btoa(String.fromCharCode.apply(null, uint8Array));
+      const img = `data:image/png;base64,${base64Image}`;
+      profileavatar.setAttribute('src', img);
+    } else {
+      const img = 'https://image.freepik.com/free-vector/man-profile-cartoon_18591-58482.jpg';
+      profileavatar.setAttribute('src', img);
+    }
+    profilename.innerHTML = `Name: <strong>${name}</strong>`;
+    profileusername.innerHTML = `Username: <strong>${username}</strong>`;
+    profileemail.innerHTML = `Email: <strong>${email}</strong>`;
+
+    document.getElementById('logoutbtn').addEventListener('click', logout)
+    function logout() {
+      alert('Anda yakin ingin logout ? ')
+      location.assign('./index.html')
+    }
+  </script>
+</body>
+
+</html>

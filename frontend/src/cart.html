@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+  <main class="container pt-5">
+    <ul class="nav bg-success fixed-top p-2 justify-content-center">
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./product.html">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./cart.html">Cart</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" aria-current="page" href="./profile.html">Profile</a>
+      </li>
+    </ul>
+    <h1 class="text-center mt-3">Cart</h1>
+    <div class="flex mt-4" id="cartcontainer"></div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('TOKEN');
+    const cartUrl = 'http://localhost:8000/cart';
+    const user = JSON.parse(localStorage.getItem('USER'));
+    const cartcontainer = document.querySelector('#cartcontainer');
+    fetch(cartUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+      .then(response => response.json())
+      .then(value => {
+        if (value.error) alert(value.message)
+        else {
+          if (value.data.length < 1) {
+            cartcontainer.innerHTML = `
+              <p class="text-center mt-5 pt-5 text-decoration-underline"><em>Cart is Empty.</em></p>
+            `;
+          }
+          value.data.forEach(({ id, id_product, id_user, qty }) => {
+            const product = JSON.parse(localStorage.getItem(`PRODUCT_${id_product}`));
+            cartcontainer.innerHTML += `
+              <div class="card mb-3 d-inline-block" style="max-width: 540px;">
+                <div class="row g-0">
+                  <div class="col-md-4">
+                    <img src="${product.img}" class="img-fluid rounded-start" alt="...">
+                  </div>
+                  <div class="col-md-8">
+                    <div class="card-body">
+                      <h5 class="card-title">${product.name}</h5>
+                      <p class="card-text">${product.price}</p>
+                      <p class="card-text">Qty: <small class="text-muted">${qty}</small></p>
+                      <button class="btn btn-sm btn-success" id="editcartbtn" idcart="${id}" idproduct="${id_product}">Edit</button>
+                      <button class="btn btn-sm btn-danger" id="deletecartbtn" idcart="${id}" idproduct="${id_product}">Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+            const editcartbtn = document.querySelectorAll('#editcartbtn');
+            const deletecartbtn = document.querySelectorAll('#deletecartbtn');
+            editcartbtn.forEach(btn => {
+              const idcart = btn.getAttribute('idcart');
+              const idproduct = btn.getAttribute('idproduct');
+              const currqty = btn.previousElementSibling.children[0].textContent;
+              btn.addEventListener('click', () => {
+                const qty = prompt('Edit Quantity', currqty);
+                if (qty) {
+                  fetch(cartUrl, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ id: idcart, qty, id_product: idproduct }),
+                  })
+                    .then(response => response.json())
+                    .then(value => {
+                      alert(value.message);
+                      location.reload();
+                    });
+                }
+              });
+            });
+            deletecartbtn.forEach(btn => {
+              const idcart = btn.getAttribute('idcart');
+              const idproduct = btn.getAttribute('idproduct');
+              btn.addEventListener('click', () => {
+                fetch(`${cartUrl}/${idcart}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                })
+                  .then(response => response.json())
+                  .then(value => {
+                    alert(value.message);
+                    location.reload();
+                  });
+              });
+            });
+          });
+        };
+      });
+  </script>
+</body>
+
+</html>

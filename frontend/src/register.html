@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+  <main class="container mt-4">
+    <h1 class="text-center">Register</h1>
+    <form class="mt-4" name="registerForm" id="registerForm">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email address</label>
+        <input type="email" class="form-control" placeholder="email address" name="email" id="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="name" class="form-label">Your name</label>
+        <input type="text" class="form-control" placeholder="your name" name="name" id="name" required>
+      </div>
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" placeholder="username" name="username" id="username" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" placeholder="password" name="password" id="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Register</button>
+      <button type="reset" class="btn btn-outline-secondary" onclick="location.assign('./index.html');">Login</button>
+    </form>
+  </main>
+
+  <script>
+    const registerUrl = 'http://localhost:8000/auth/register';
+    const registerForm = document.querySelector('#registerForm');
+    registerForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const email = document.querySelector('#email').value;
+      const name = document.querySelector('#name').value;
+      const username = document.querySelector('#username').value;
+      const password = document.querySelector('#password').value;
+      fetch(registerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, name, username, password }),
+      })
+        .then(response => response.json())
+        .then(value => {
+          if (value.error) alert(value.message)
+          else {
+            localStorage.setItem('TOKEN', value.data.token);
+            localStorage.setItem('USER', JSON.stringify(value.data.user));
+            location.assign('./product.html');
+          };
+        });
+    });
+  </script>
+</body>
+
+</html>
